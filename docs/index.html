@@ -20,6 +20,8 @@ body {
   background: radial-gradient(120% 120% at 50% 20%, var(--stage-1), var(--stage-2));
   display: flex; flex-direction: column; align-items: center;
   overflow: hidden;
+  height: 100dvh; /* the height:100% above is the pre-iOS-15.4 fallback */
+  overscroll-behavior: none;
 }
 
 /* Language toggle: both languages are in the DOM; CSS shows one. */
@@ -33,20 +35,23 @@ html[data-lang="cn"] .prose {
 .stage {
   flex: 1; width: 100%;
   display: flex; align-items: center; justify-content: center;
-  padding: 3vh 2vw 1vh;
+  padding: 3vh 3vw 1vh; /* 3vw each side leaves exactly 94vw for the book */
   min-height: 0;
 }
+/* Pre-JS placeholder only: sizeFrame() in BOOK_JS sets explicit pixel
+   width/height before StPageFlip initializes (the library derives all its
+   geometry from this box's measured width, so it must never depend on
+   layout-time CSS resolution). */
 .book-frame {
   width: min(94vw, calc((100dvh - 14vh) * 1.7778));
   aspect-ratio: 1056 / 594;
 }
-/* Narrow screens: StPageFlip falls back to a single portrait page (two half
-   spreads can't fit), so the frame must take one page's aspect instead. */
-@media (max-width: 700px) {
-  .book-frame {
-    width: min(94vw, calc((100dvh - 16vh) * 0.8889));
-    aspect-ratio: 528 / 594;
-  }
+/* The browser must never claim a pan/zoom gesture over the book; the ID
+   selector outranks the vendor's injected .stf__parent{touch-action:pan-y}. */
+#book {
+  touch-action: none;
+  -webkit-user-select: none; user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* ---- Pages ---- */
@@ -79,6 +84,7 @@ html[data-lang="cn"] .prose {
 .pane.text { position: relative; }
 .pane.art img {
   width: 100%; height: 100%; object-fit: cover; display: block;
+  -webkit-touch-callout: none; /* no iOS long-press image sheet mid-drag */
 }
 
 .prose { color: var(--ink); font-size: 3.409cqw; line-height: 1.5; }
@@ -108,6 +114,7 @@ html[data-lang="cn"] .prose {
 /* ---- Toolbar ---- */
 .toolbar {
   display: flex; align-items: center; gap: 0.6rem;
+  flex: none;
   padding: 0.55rem 0.9rem; margin: 0 0 2.2vh;
   background: rgba(251, 249, 243, 0.08);
   border: 1px solid rgba(251, 249, 243, 0.14);
@@ -121,6 +128,7 @@ html[data-lang="cn"] .prose {
   height: 1.9rem; padding: 0;
   display: inline-flex; align-items: center; justify-content: center;
   cursor: pointer; text-decoration: none;
+  touch-action: manipulation; /* no double-tap zoom on rapid Next taps */
   transition: background 150ms ease, border-color 150ms ease, transform 80ms ease;
 }
 /* Fixed widths, sized to the widest (Chinese) labels, so toggling the
@@ -144,8 +152,11 @@ html[data-lang="cn"] .prose {
 .toolbar .nav .lbl, .toolbar #btn-lang, .toolbar .counter {
   padding-top: 0.15em;
 }
-.toolbar button:hover, .toolbar a:hover {
-  background: rgba(185, 84, 45, 0.35); border-color: rgba(185, 84, 45, 0.7);
+/* hover-capable devices only, so tapped buttons don't stick orange on iOS */
+@media (hover: hover) {
+  .toolbar button:hover, .toolbar a:hover {
+    background: rgba(185, 84, 45, 0.35); border-color: rgba(185, 84, 45, 0.7);
+  }
 }
 .toolbar button:active, .toolbar a:active {
   transform: scale(0.92);
@@ -155,6 +166,17 @@ html[data-lang="cn"] .prose {
 .toolbar .counter {
   font: 500 0.85rem/1 "Helvetica Neue", Arial, sans-serif;
   color: rgba(244, 239, 228, 0.75); min-width: 4.5rem; text-align: center;
+}
+/* Below this the full labeled bar (~560px) can't fit: drop the nav labels,
+   tighten everything, fatten the tap targets; every control survives. */
+@media (max-width: 620px) {
+  .toolbar { gap: 0.25rem; padding: 0.45rem 0.5rem; }
+  .toolbar .nav .lbl { display: none; }
+  .toolbar .nav { width: 2.1rem; padding: 0; justify-content: center; }
+  .toolbar .jump, .toolbar a.pdf { width: 2.1rem; }
+  .toolbar #btn-lang { width: 2.5rem; font-size: 0.78rem; }
+  .toolbar .counter { min-width: 2.75rem; font-size: 0.78rem; }
+  .toolbar button, .toolbar a { height: 2.2rem; }
 }
 noscript { color: #f4efe4; font-size: 1rem; padding: 2rem; text-align: center; }
 </style>
@@ -259,6 +281,35 @@ const totalSpreads = pageEls.length / 2;
 const startSpread = Math.min(
   Math.max(parseInt(params.get('page'), 10) || 1, 1), totalSpreads);
 
+// Deterministic frame sizing. StPageFlip measures its container's width at
+// init and derives everything (page size, height, hit areas) from it, so the
+// container gets an explicit pixel size before init and on every viewport
+// change; CSS-time formulas proved unreliable on phones. Portrait iff width
+// < 480 mirrors the library's own rule (blockWidth < 2*minWidth); capping
+// portrait width at 478 keeps the two decisions from ever disagreeing.
+const stage = document.querySelector('.stage');
+const frame = document.querySelector('.book-frame');
+
+function sizeFrame() {
+  const cs = getComputedStyle(stage);
+  const availW = stage.clientWidth
+    - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+  const availH = stage.clientHeight
+    - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+  // Same viewport caps as the old pure-CSS sizing (94vw wide, 86dvh/84dvh
+  // tall), so the desktop book keeps its exact size; the stage clamp is the
+  // safety net that keeps the toolbar visible on small screens.
+  let w = Math.min(availW, Math.min(availH, window.innerHeight * 0.86) * (1056 / 594));
+  const portrait = w < 480;
+  if (portrait) {
+    w = Math.min(availW, Math.min(availH, window.innerHeight * 0.84) * (528 / 594), 478);
+  }
+  w = Math.max(Math.floor(w), 240);
+  frame.style.width = w + 'px';
+  frame.style.height = Math.floor(portrait ? w * 594 / 528 : w * 594 / 1056) + 'px';
+}
+sizeFrame();
+
 const pageFlip = new St.PageFlip(el('book'), {
   width: 528,
   height: 594,
@@ -279,6 +330,7 @@ const pageFlip = new St.PageFlip(el('book'), {
   disableFlipByClick: true,
 });
 pageFlip.loadFromHTML(pageEls);
+window.book = pageFlip; // console/debug handle
 
 function setCounter(pageIndex) {
   const spread = Math.floor(pageIndex / 2) + 1;
@@ -286,22 +338,73 @@ function setCounter(pageIndex) {
 }
 setCounter(pageFlip.getCurrentPageIndex());
 
+// disableFlipByClick also gates the library's OWN synthetic flip points, and
+// in portrait mode flipPrev()'s point {x:10} converts to mid-book coordinates
+// and gets silently rejected (backward navigation dead on phones). Toolbar
+// and keyboard navigation is deliberate, not a bare click, so lift the gate
+// just for the duration of the call.
+function nav(fn) {
+  const s = pageFlip.getSettings();
+  const saved = s.disableFlipByClick;
+  s.disableFlipByClick = false;
+  try { fn(); } finally { s.disableFlipByClick = saved; }
+}
+const goPrev = () => nav(() => pageFlip.flipPrev());
+const goNext = () => nav(() => pageFlip.flipNext());
+const goHome = () => nav(() => pageFlip.flip(0));
+const goEnd = () => nav(() => pageFlip.flip((totalSpreads - 1) * 2));
+
 pageFlip.on('flip', (e) => setCounter(e.data));
-el('btn-home').addEventListener('click', () => pageFlip.flip(0));
-el('btn-prev').addEventListener('click', () => pageFlip.flipPrev());
-el('btn-next').addEventListener('click', () => pageFlip.flipNext());
-el('btn-end').addEventListener('click', () => pageFlip.flip((totalSpreads - 1) * 2));
+el('btn-home').addEventListener('click', goHome);
+el('btn-prev').addEventListener('click', goPrev);
+el('btn-next').addEventListener('click', goNext);
+el('btn-end').addEventListener('click', goEnd);
 el('btn-lang').addEventListener('click', () => {
   lang = lang === 'en' ? 'cn' : 'en';
   applyLang();
   setCounter(pageFlip.getCurrentPageIndex());
 });
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'ArrowLeft') pageFlip.flipPrev();
-  if (e.key === 'ArrowRight') pageFlip.flipNext();
-  if (e.key === 'Home') pageFlip.flip(0);
-  if (e.key === 'End') pageFlip.flip((totalSpreads - 1) * 2);
+  if (e.key === 'ArrowLeft') goPrev();
+  if (e.key === 'ArrowRight') goNext();
+  if (e.key === 'Home') goHome();
+  if (e.key === 'End') goEnd();
 });
+
+// In portrait mode the library's touch handling is broken the same way its
+// flipPrev is: the single-page bounds rect is offset by a full page width, so
+// touches map to the wrong book region (swipe-forward flips backward and
+// swipe-back does nothing). Intercept touches before they reach the library
+// (capture phase on the frame, its listener sits on a descendant) and run our
+// own swipe detection. Landscape keeps the library's native drag-to-fold.
+let touchStartX = null, touchStartY = null;
+frame.addEventListener('touchstart', (e) => {
+  if (pageFlip.getOrientation() !== 'portrait') return;
+  e.stopPropagation();
+  touchStartX = e.touches[0].clientX;
+  touchStartY = e.touches[0].clientY;
+}, { capture: true, passive: true });
+frame.addEventListener('touchend', (e) => {
+  if (pageFlip.getOrientation() !== 'portrait' || touchStartX === null) return;
+  e.stopPropagation();
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  const dy = e.changedTouches[0].clientY - touchStartY;
+  touchStartX = null;
+  if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+  if (dx < 0) goNext(); else goPrev();
+}, { capture: true, passive: true });
+
+// Phones never fire resize after load unless the frame follows the viewport:
+// URL-bar collapse, rotation, and split-screen all land here. update()
+// re-measures, switches portrait/landscape when needed, and re-shows the
+// current page.
+let resizeTimer = null;
+function onViewportChange() {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => { sizeFrame(); pageFlip.update(); }, 150);
+}
+window.addEventListener('resize', onViewportChange);
+window.addEventListener('orientationchange', onViewportChange);
 </script>
 </body>
 </html>
