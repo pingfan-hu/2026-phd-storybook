@@ -1,0 +1,159 @@
+/* A Million Cars Come Home — storybook layout
+   Landscape spreads: prose on the left, illustration on the right.
+   Designed for Chrome headless --print-to-pdf at 11in x 6.1875in (16:9). */
+
+:root {
+  --page-w: 11in;
+  --page-h: 6.1875in;
+
+  --paper: #fbf9f3;          /* warm off-white text pane */
+  --ink: #3a3733;            /* soft near-black body text */
+  --ink-soft: #6f6a62;       /* muted captions / meta */
+  --accent: #b9542d;         /* warm terracotta accent */
+  --rule: #e7e1d4;           /* hairline dividers */
+
+  --img-bg-1: #efe7d6;       /* placeholder panel gradient */
+  --img-bg-2: #e3d6bf;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: #ffffff;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+@page {
+  size: 11in 6.1875in;
+  margin: 0;
+}
+
+/* Each spread is exactly one printed page. */
+.spread {
+  width: var(--page-w);
+  height: var(--page-h);
+  display: flex;
+  overflow: hidden;
+  page-break-after: always;
+  break-after: page;
+  background: var(--paper);
+}
+.spread:last-child {
+  page-break-after: auto;
+  break-after: auto;
+}
+
+/* ---- Left: prose pane ---- */
+/* The prose is vertically centered and, being centered, can overflow the pane's
+   content box symmetrically into the padding; nothing clips it until the page
+   edge. The vertical padding is therefore the guaranteed minimum top/bottom
+   margin, and build.py fails the build if any spread's prose exceeds the
+   content box (i.e. would eat into this margin). */
+.text-pane {
+  width: 50%;
+  height: 100%;
+  padding: 0.35in 0.7in 0.35in 0.85in;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background: var(--paper);
+}
+
+.prose {
+  font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  color: var(--ink);
+  font-size: 13.5pt;
+  line-height: 1.5;
+  letter-spacing: 0.1px;
+}
+
+.prose p {
+  margin: 0 0 0.7em 0;
+}
+.prose p:last-child { margin-bottom: 0; }
+
+.prose strong { color: var(--accent); font-weight: 700; }
+.prose em { font-style: italic; }
+
+/* ---- Title spread ---- */
+.spread.title .text-pane { justify-content: center; }
+.spread.title .prose { font-size: 14pt; }
+.spread.title .prose p:first-child {
+  font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  font-size: 30pt;
+  line-height: 1.1;
+  color: var(--ink);
+  margin-bottom: 0.25em;
+}
+.spread.title .prose p:nth-child(2) {
+  font-size: 15pt;
+  color: var(--accent);
+  font-style: italic;
+  margin-bottom: 1.2em;
+}
+.spread.title .prose p { color: var(--ink-soft); font-size: 12pt; }
+
+/* ---- Back cover ---- */
+.spread.backcover .prose em {
+  display: block;
+  color: var(--ink-soft);
+  font-style: normal;
+  font-size: 11.5pt;
+  line-height: 1.3;
+}
+
+/* ---- Right: illustration pane ---- */
+.image-pane {
+  width: 50%;
+  height: 100%;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--img-bg-1), var(--img-bg-2));
+  border-left: 1px solid var(--rule);
+}
+
+/* Placeholder card shown until real art is generated. */
+.placeholder {
+  width: 78%;
+  max-width: 4.6in;
+  padding: 0.5in 0.45in;
+  text-align: center;
+  border: 1.5px dashed #b9a988;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.35);
+  color: #6c6450;
+}
+.placeholder .tag {
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  font-size: 9pt;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 0.5em;
+}
+.placeholder .brief {
+  font-family: "Iowan Old Style", Palatino, Georgia, serif;
+  font-style: italic;
+  font-size: 11pt;
+  line-height: 1.45;
+}
+.placeholder .num {
+  margin-top: 0.6em;
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  font-size: 8.5pt;
+  letter-spacing: 1px;
+  color: #9a9079;
+}
+
+/* When a real image exists, build.py swaps in <img class="art">. */
+.image-pane img.art {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}

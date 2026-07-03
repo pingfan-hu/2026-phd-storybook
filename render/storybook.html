@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>A Million Cars Come Home</title>
+<style>
+/* A Million Cars Come Home — storybook layout
+   Landscape spreads: prose on the left, illustration on the right.
+   Designed for Chrome headless --print-to-pdf at 11in x 6.1875in (16:9). */
+
+:root {
+  --page-w: 11in;
+  --page-h: 6.1875in;
+
+  --paper: #fbf9f3;          /* warm off-white text pane */
+  --ink: #3a3733;            /* soft near-black body text */
+  --ink-soft: #6f6a62;       /* muted captions / meta */
+  --accent: #b9542d;         /* warm terracotta accent */
+  --rule: #e7e1d4;           /* hairline dividers */
+
+  --img-bg-1: #efe7d6;       /* placeholder panel gradient */
+  --img-bg-2: #e3d6bf;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: #ffffff;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+@page {
+  size: 11in 6.1875in;
+  margin: 0;
+}
+
+/* Each spread is exactly one printed page. */
+.spread {
+  width: var(--page-w);
+  height: var(--page-h);
+  display: flex;
+  overflow: hidden;
+  page-break-after: always;
+  break-after: page;
+  background: var(--paper);
+}
+.spread:last-child {
+  page-break-after: auto;
+  break-after: auto;
+}
+
+/* ---- Left: prose pane ---- */
+/* The prose is vertically centered and, being centered, can overflow the pane's
+   content box symmetrically into the padding; nothing clips it until the page
+   edge. The vertical padding is therefore the guaranteed minimum top/bottom
+   margin, and build.py fails the build if any spread's prose exceeds the
+   content box (i.e. would eat into this margin). */
+.text-pane {
+  width: 50%;
+  height: 100%;
+  padding: 0.35in 0.7in 0.35in 0.85in;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background: var(--paper);
+}
+
+.prose {
+  font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  color: var(--ink);
+  font-size: 13.5pt;
+  line-height: 1.5;
+  letter-spacing: 0.1px;
+}
+
+.prose p {
+  margin: 0 0 0.7em 0;
+}
+.prose p:last-child { margin-bottom: 0; }
+
+.prose strong { color: var(--accent); font-weight: 700; }
+.prose em { font-style: italic; }
+
+/* ---- Title spread ---- */
+.spread.title .text-pane { justify-content: center; }
+.spread.title .prose { font-size: 14pt; }
+.spread.title .prose p:first-child {
+  font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  font-size: 30pt;
+  line-height: 1.1;
+  color: var(--ink);
+  margin-bottom: 0.25em;
+}
+.spread.title .prose p:nth-child(2) {
+  font-size: 15pt;
+  color: var(--accent);
+  font-style: italic;
+  margin-bottom: 1.2em;
+}
+.spread.title .prose p { color: var(--ink-soft); font-size: 12pt; }
+
+/* ---- Back cover ---- */
+.spread.backcover .prose em {
+  display: block;
+  color: var(--ink-soft);
+  font-style: normal;
+  font-size: 11.5pt;
+  line-height: 1.3;
+}
+
+/* ---- Right: illustration pane ---- */
+.image-pane {
+  width: 50%;
+  height: 100%;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--img-bg-1), var(--img-bg-2));
+  border-left: 1px solid var(--rule);
+}
+
+/* Placeholder card shown until real art is generated. */
+.placeholder {
+  width: 78%;
+  max-width: 4.6in;
+  padding: 0.5in 0.45in;
+  text-align: center;
+  border: 1.5px dashed #b9a988;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.35);
+  color: #6c6450;
+}
+.placeholder .tag {
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  font-size: 9pt;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 0.5em;
+}
+.placeholder .brief {
+  font-family: "Iowan Old Style", Palatino, Georgia, serif;
+  font-style: italic;
+  font-size: 11pt;
+  line-height: 1.45;
+}
+.placeholder .num {
+  margin-top: 0.6em;
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  font-size: 8.5pt;
+  letter-spacing: 1px;
+  color: #9a9079;
+}
+
+/* When a real image exists, build.py swaps in <img class="art">. */
+.image-pane img.art {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+
+</style>
+</head>
+<body>
+  <section class="spread title" data-id="01">
+    <div class="text-pane"><div class="prose">
+      <p><strong>A Million Cars Come Home</strong></p>
+      <p><em>A Smart-Charging Story</em></p>
+      <p>The PhD research of Pingfan Hu: three studies on electric vehicles, the grid, and the open-source tools built along the way.</p>
+    </div></div>
+    <div class="image-pane"><img class="art" src="../images/spread-01.png" alt=""></div>
+  </section>
+  <section class="spread standard" data-id="02">
+    <div class="text-pane"><div class="prose">
+      <p>This is Pingfan.</p>
+      <p>Pingfan spent his PhD on battery electric vehicles, and on one deceptively simple question about them: when will they charge, and what does that timing mean for the electricity grid?</p>
+      <p>Answering it took three connected studies: one about people, one about the grid and its economics, and one about the research tools themselves.</p>
+      <p>The dissertation that resulted is long and full of equations. Most people will never read it. This book tells the same story in plain language.</p>
+    </div></div>
+    <div class="image-pane"><img class="art" src="../images/spread-02.png" alt=""></div>
+  </section>
+  <section class="spread standard" data-id="03">
+    <div class="text-pane"><div class="prose">
+      <p>Pingfan had not planned to pursue a PhD.</p>
+      <p>Then Professor John Paul “JP” Helveston reached out to him directly. JP had funding from the Alfred P. Sloan Foundation to study smart charging for battery electric vehicles, and Pingfan&#x27;s background in engineering and data science looked like a match. The direction was unusual: students normally seek out advisors, not the other way around.</p>
+      <p>Their first conversation ran three hours, far longer than either had planned. By the end, the outline of a research agenda had taken shape: whether BEV owners would accept managed charging, what their participation would be worth to the grid, and what tools the research itself would require.</p>
+      <p>Those three questions became the dissertation.</p>
+    </div></div>
+    <div class="image-pane"><img class="art" src="../images/spread-03.png" alt=""></div>
+  </section>
+  <section class="spread standard" data-id="04">
+    <div class="text-pane"><div class="prose">
+      <p>The core problem is one of timing.</p>
+      <p>Battery electric vehicles cut transportation emissions, but their benefit depends on when they charge. Most owners plug in when they arrive home, so unmanaged charging stacks directly onto the <strong>evening peak</strong>, when household demand is already highest. Serving that combined peak means running the most expensive generators and, eventually, building capacity that sits idle the rest of the day.</p>
+      <p><strong>Smart charging</strong> is the alternative: coordinate charging so it moves into the overnight hours, when demand is low.</p>
+      <p>Whether it can work turns on three questions. Will owners participate, and on what terms? How much peak reduction does it buy, and at what cost? And what research infrastructure does it take to find out?</p>
+    </div></div>
+    <div class="image-pane"><img class="art" src="../images/spread-04.png" alt=""></div>
+  </section>
+  <section class="spread standard" data-id="05">
+    <div class="text-pane"><div class="prose">
+      <p>The first question, about participation, is where the dissertation begins.</p>
+      <p>Smart charging only works if vehicle owners agree to give up some control, so Study 1 examined the two program designs utilities actually offer. Under <strong>supplier-managed charging (SMC)</strong>, the utility decides when charging happens but guarantees the vehicle reaches an agreed charge level by an agreed time. Under <strong>vehicle-to-grid (V2G)</strong>, the vehicle also sends power back to the grid when needed, acting as distributed storage.</p>
+      <p>The two programs ask different things of an owner. SMC asks for patience with timing; V2G asks the battery to actively work for the grid, wear and all. There was good reason to expect owners to price those requests very differently.</p>
+    </div></div>
+    <div class="image-pane"><img class="art" src="../images/spread-05.png" alt=""></div>
+  </section>
+  <section class="spread standard" data-id="06">
+    <div class="text-pane"><div class="prose">
+      <p>Whom you ask matters as much as what you ask.</p>
+      <p>Most earlier studies surveyed the general car-owning public, few of whom have ever charged an electric vehicle, let alone joined a smart charging program. Study 1 sampled differently: <strong>1,356 current US BEV owners</strong>, recruited in 2024 through targeted social media ads and a market research panel.</p>
+      <p>A screening question did the quality control: respondents picked their vehicle from a list of 1,748 models spanning thirty years, of which only 77, or 4.4 percent, were battery electric. Without actually owning one, guessing right was unlikely.</p>
+      <p>These were people who knew exactly what charging involves; 682 of them completed the V2G questions as well.</p>
+    </div></div>
+    <div class="image-pane"><img class="art" src="../images/spread-06.png" alt=""></div>
+  </section>
+  <section class="spread standard" data-id="07">
+    <div class="text-pane"><div class="prose">
+      <p>You cannot ask people directly how much they value flexibility; nobody carries such a number around.</p>
+      <p>Study 1 instead used a <strong>discrete choice experiment</strong>. Each respondent faced a series of paired program offers, each defined by concrete attributes: a one-time enrollment payment, a recurring monthly payment, the number of times per month the owner could override the program, and guaranteed battery charge thresholds. They chose one program, the other, or neither, six times for SMC and six more for V2G.</p>
+      <p>Choices like these, repeated across randomized attribute combinations, let a <strong>logit model</strong> estimate how strongly each attribute moves the decision to participate. Trade-offs reveal what direct questions cannot.</p>
+    </div></div>
+    <div class="image-pane"><img class="art" src="../images/spread-07.png" alt=""></div>
+  </section>
+  <section class="spread standard" data-id="08">
+    <div class="text-pane"><div class="prose">
+      <p>The work was collaborative from the start.</p>
+      <p>The smart charging studies brought together researchers from several universities: Alan Jenn at UC Davis; Brian Tarroja, Kate Forrest, and Matthew Dean at UC Irvine; and Eric Hittinger at the Rochester Institute of Technology, who later served on Pingfan&#x27;s dissertation committee. JP, as advisor and principal investigator, kept the whole effort pointed in the right direction.</p>
+      <p>Pingfan led the day-to-day research, but the questions spanned vehicles, grids, and surveys, and no single person knows all three equally well. The team did.</p>
+    </div></div>
+    <div class="image-pane"><img class="art" src="../images/spread-08.png" alt=""></div>
+  </section>
+  <section class="spread standard" data-id="09">
+    <div class="text-pane"><div class="prose">
+      <p>For supplier-managed charging, the results were encouraging, and a little surprising.</p>
+      <p>Owners cared less about money than expected, and more about <strong>operational flexibility</strong>: a guaranteed charge level by morning, and the ability to override when plans change. The guaranteed threshold mattered far more than the minimum: owners want range certainty, not control over the details.</p>
+      <p>Good flexibility with no payment reached at least <strong>50 percent</strong> predicted enrollment. Recurring payments worked hardest: two to three dollars a month matched a one-time 65 dollars, roughly twenty to one.</p>
+      <p>People will share control of their charging. What they want in return is certainty that they will not be stranded.</p>
+    </div></div>
+    <div class="image-pane"><img class="art" src="../images/spread-09.png" alt=""></div>
+  </section>
+  <section class="spread standard" data-id="10">
+    <div class="text-pane"><div class="prose">
+      <p>Vehicle-to-grid told a different story.</p>
+      <p>Sending power out of one&#x27;s own battery is a larger request, and owners priced it accordingly: participation was far more sensitive to money than under SMC. Pay well per discharge event and enrollment climbs steeply; at 20 dollars per event, four events a month, the model predicts <strong>82 percent</strong> enrollment.</p>
+      <p>The design implication is clean. SMC suits a simple subscription with modest recurring payments and strong guarantees; V2G is a market for discrete grid services, best paid per event.</p>
+      <p>The team also published an interactive <strong>enrollment simulator</strong> where utilities and policymakers can test a program and see its predicted participation.</p>
+    </div></div>
+    <div class="image-pane"><img class="art" src="../images/spread-10.png" alt=""></div>
+  </section>
+  <section class="spread standard" data-id="11">
+    <div class="text-pane"><div class="prose">
+      <p>Stated willingness, however, is not yet grid value.</p>
+      <p>Study 1 established the terms on which owners would participate. Study 2 asked the two questions that determine whether a utility should act on those terms: how much does managed charging actually lower the evening peak, and does the arithmetic survive the cost of the incentives?</p>
+      <p>The economics were the heart of it. Every enrolled household must be paid, and the peak reduction has to be worth the total bill.</p>
+    </div></div>
+    <div class="image-pane"><img class="art" src="../images/spread-11.png" alt=""></div>
+  </section>
+  <section class="spread standard" data-id="12">
+    <div class="text-pane"><div class="prose">
+      <p>Study 2 connected the two halves empirically rather than by assumption.</p>
+      <p>The enrollment results from Study 1 became an <strong>enrollment curve</strong>: for any monthly incentive, the predicted share of owners who participate. That curve fed a year-long simulation of regional grids at 15-minute resolution, in which 10,000 vehicles following realistic travel patterns from the National Household Travel Survey drive, park, and charge, scaled up by Census household counts to full regional fleets.</p>
+      <p>Two regions anchored the comparison because their grids differ structurally: <strong>CAISO</strong> in California, solar-heavy with a deep overnight valley, and <strong>NYISO</strong> in New York, flatter, hydro-reliant, and winter-peaking.</p>
+    </div></div>
+    <div class="image-pane"><img class="art" src="../images/spread-12.png" alt=""></div>
+  </section>
+  <section class="spread standard" data-id="13">
+    <div class="text-pane"><div class="prose">
+      <p>California&#x27;s grid made the case vivid.</p>
+      <p>Its daily <strong>net load</strong> curve sags through the afternoon while solar generation carries the demand, then ramps steeply as the sun sets and households switch on. Engineers call it the <strong>duck curve</strong>, and the name is apt. The valley that follows the evening peak is deep and dependable, which is exactly the room that shifted charging needs.</p>
+      <p>The simulation moved charging out of the evening and into that valley. At full enrollment, CAISO&#x27;s evening peak fell by 3.7 gigawatts, or 12.1 percent, on an annual-average day, and by up to <strong>5.6 gigawatts</strong> on the most favorable day. NYISO, smaller and flatter, saw 1.6 gigawatts on the average day.</p>
+      <p>The physics works. The open question is the cost.</p>
+    </div></div>
+    <div class="image-pane"><img class="art" src="../images/spread-13.png" alt=""></div>
+  </section>
+  <section class="spread standard" data-id="14">
+    <div class="text-pane"><div class="prose">
+      <p>The cost side turns on one structural fact: every enrollee receives the same monthly incentive.</p>
+      <p>The enrollment curve is concave. About <strong>30 percent</strong> of owners would participate with no payment at all; 20 dollars a month brings roughly <strong>60 percent</strong>; reaching everyone requires about <strong>85 dollars a month</strong>, paid to every household. Raising the incentive to attract the next participant means raising it for everyone already enrolled, so total program cost grows nonlinearly while the added peak reduction shrinks.</p>
+      <p>This is <strong>diminishing marginal returns</strong>, and in these programs it is sharp.</p>
+    </div></div>
+    <div class="image-pane"><img class="art" src="../images/spread-14.png" alt=""></div>
+  </section>
+  <section class="spread standard" data-id="15">
+    <div class="text-pane"><div class="prose">
+      <p>The practical answer is moderation.</p>
+      <p>Enrollment in the <strong>30 to 50 percent</strong> range captured most of the achievable peak reduction at a small fraction of the cost of near-full participation. Beyond that range, each additional gigawatt of reduction becomes rapidly more expensive.</p>
+      <p>And past a threshold, more enrollment is not merely wasteful but counterproductive. On about <strong>15 percent</strong> of CAISO days, concentrating too much charging in the overnight window reconstituted a new peak there. The mountain does not disappear; it moves.</p>
+      <p>Moderate, well-targeted enrollment is the cost-effective operating point. Maximum participation is not the goal.</p>
+    </div></div>
+    <div class="image-pane"><img class="art" src="../images/spread-15.png" alt=""></div>
+  </section>
+  <section class="spread standard" data-id="16">
+    <div class="text-pane"><div class="prose">
+      <p>Region and season set the boundaries.</p>
+      <p>In CAISO, cost efficiency held essentially year-round, because solar keeps the gap between the evening peak and the overnight valley wide in every season. In NYISO, efficiency deteriorated in winter, when space heating keeps overnight demand elevated and compresses the very valley the program depends on.</p>
+      <p>The design lesson follows directly: a smart charging program is not one product to deploy uniformly, but a schedule to be tuned to each region&#x27;s net load shape.</p>
+    </div></div>
+    <div class="image-pane"><img class="art" src="../images/spread-16.png" alt=""></div>
+  </section>
+  <section class="spread standard" data-id="17">
+    <div class="text-pane"><div class="prose">
+      <p>Study 3 began as friction inside Study 1.</p>
+      <p>Fielding a careful experiment on 1,356 people requires serious survey software, and the existing options each failed in a familiar way. Commercial platforms were capable but expensive and closed. Free tools were easy but limited. And almost none treated a survey as something a researcher could version, share, review, and reproduce exactly, years later, the way code and manuscripts are treated.</p>
+      <p>For reproducible research, that is not an inconvenience; it is a methodological gap. The team decided to close it themselves.</p>
+    </div></div>
+    <div class="image-pane"><img class="art" src="../images/spread-17.png" alt=""></div>
+  </section>
+  <section class="spread standard" data-id="18">
+    <div class="text-pane"><div class="prose">
+      <p>The result is <strong>surveydown</strong>, an open-source survey platform built in R.</p>
+      <p>Instead of assembling questions by clicking through a web interface, a researcher writes the survey as plain text, markdown with R code, and surveydown renders it as a live web survey. It stands on three mature open-source technologies: <strong>Quarto</strong> for the document, <strong>Shiny</strong> for the interactive application, and <strong>PostgreSQL</strong> for response storage.</p>
+      <p>Bogdan Bunea, an Engineering Management and Systems Engineering undergraduate in the lab, built the database layer that stores responses safely. The platform is free, open-source, and distributed on CRAN under an MIT license.</p>
+    </div></div>
+    <div class="image-pane"><img class="art" src="../images/spread-18.png" alt=""></div>
+  </section>
+  <section class="spread standard" data-id="19">
+    <div class="text-pane"><div class="prose">
+      <p>Plain text sounds like a modest design choice. It carries the platform&#x27;s three main advantages.</p>
+      <p>First, <strong>reproducibility</strong>: a survey that lives in text files can be version-controlled, shared, audited, and re-run identically, which proprietary click-built surveys cannot.</p>
+      <p>Second, <strong>programmability</strong>: because real code executes while the survey runs, it supports conditional display, skip logic, randomization, and fully custom experimental designs, including the choice experiment in Study 1.</p>
+      <p>Third, <strong>data ownership</strong>: the survey application, its hosting, and its response database are deliberately separated, so researchers keep full control of their own data rather than renting access to it.</p>
+    </div></div>
+    <div class="image-pane"><img class="art" src="../images/spread-19.png" alt=""></div>
+  </section>
+  <section class="spread standard" data-id="20">
+    <div class="text-pane"><div class="prose">
+      <p>surveydown outgrew the lab that built it.</p>
+      <p>It has accumulated thousands of downloads on CRAN and is now used by researchers well beyond transportation: public health, economics, education, and policy among them. Community contributors have extended it, including translations into six languages, and a companion tool, <strong>sdstudio</strong>, is in development to add a graphical interface without giving up reproducibility.</p>
+      <p>What began as a workaround for one experiment has become shared research infrastructure.</p>
+    </div></div>
+    <div class="image-pane"><img class="art" src="../images/spread-20.png" alt=""></div>
+  </section>
+  <section class="spread standard" data-id="21">
+    <div class="text-pane"><div class="prose">
+      <p>Read together, the three studies form one argument.</p>
+      <p>Study 1 measured, from 1,356 owners, the terms on which people will participate in managed charging. Study 2 carried those measured preferences into grid simulation and returned an operating rule: target moderate enrollment, tuned to the regional grid, because that is where the benefit is large and the cost is small. Study 3 built the open instrument that made the measurement possible, and left it to the field.</p>
+      <p>Consumer behavior, grid economics, and research infrastructure: each study answers the question the previous one exposed.</p>
+    </div></div>
+    <div class="image-pane"><img class="art" src="../images/spread-21.png" alt=""></div>
+  </section>
+  <section class="spread standard" data-id="22">
+    <div class="text-pane"><div class="prose">
+      <p>The dissertation also states plainly what it cannot yet claim.</p>
+      <p>Stated preferences overstate real behavior: deployed pilot programs today enroll only <strong>4 to 10 percent</strong> of eligible owners, far below the modeled optimum, and closing that gap with revealed-preference data is the clearest next step. The simulations cover detached single-family homes with home charging; apartments, workplaces, and public charging remain open questions. V2G still needs the same cost-efficiency treatment SMC received. And sdstudio must mature before surveydown fully serves researchers who do not code.</p>
+      <p>Each of these is a research program of its own. That is how the work continues.</p>
+    </div></div>
+    <div class="image-pane"><img class="art" src="../images/spread-22.png" alt=""></div>
+  </section>
+  <section class="spread standard" data-id="23">
+    <div class="text-pane"><div class="prose">
+      <p>A PhD confers skills, and Pingfan leaves with a full set: choice modeling, grid simulation, data science in R, and the craft of building research software.</p>
+      <p>But the larger inheritance was a mindset, learned from JP across four years: take ownership of the work, never give up on a hard problem, and treat every project as part of a larger system, with origins and consequences beyond itself.</p>
+      <p>None of it was done alone. His committee and collaborators sharpened every study; the Helveston Lab made the years good ones; the Alfred P. Sloan Foundation funded the work and welcomed its unexpected software offshoot; and his parents, his friends, and above all his wife carried him through.</p>
+      <p>To all of them, thank you.</p>
+    </div></div>
+    <div class="image-pane"><img class="art" src="../images/spread-23.png" alt=""></div>
+  </section>
+  <section class="spread backcover" data-id="24">
+    <div class="text-pane"><div class="prose">
+      <p>That is the story of a million cars coming home, and of what four years of research says about when they should charge.</p>
+      <p>The full dissertation is called:</p>
+      <p><em>Sustainable Transportation, Sustainable Research: Consumer Adoption and Grid Peak-Shaving of Battery Electric Vehicle Smart Charging, Inspiring the surveydown Open-Source Survey Platform</em></p>
+      <p>It contains the complete methods, models, and results, and you are warmly invited to read it.</p>
+      <p><em>Pingfan Hu, PhD</em></p>
+      <p><em>George Washington University, 2026</em></p>
+    </div></div>
+    <div class="image-pane"><img class="art" src="../images/spread-24.png" alt=""></div>
+  </section>
+</body>
+</html>
