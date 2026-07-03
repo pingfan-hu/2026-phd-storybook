@@ -103,6 +103,11 @@ BOOK_CSS = """
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; }
+/* iOS Safari paints the area behind its collapsing URL bar with the ROOT
+   background (white by default), and re-composites it mid-animation with the
+   page's dark gradient: a white/dark flicker on every flip. A solid dark
+   root background keeps that strip one color in every state. */
+html { background: #201d19; }
 body {
   font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
   background: radial-gradient(120% 120% at 50% 20%, var(--stage-1), var(--stage-2));
@@ -501,6 +506,7 @@ def build_book() -> str:
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#201d19">
 <title>A Million Cars Come Home</title>
 <style>{BOOK_CSS}</style>
 </head>
