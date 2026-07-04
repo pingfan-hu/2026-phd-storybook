@@ -330,8 +330,10 @@ const pageFlip = new St.PageFlip(el('book'), {
   maxShadowOpacity: 0.35,
   flippingTime: 500,
   mobileScrollSupport: false,
-  // Flip only by dragging (or the toolbar/keys): no corner fold-out preview
-  // when the cursor nears an edge, and no flip on a bare click.
+  // No corner fold-out preview when the cursor nears an edge, and the
+  // library's own click-to-flip stays off (it maps clicks to the wrong book
+  // region in portrait). Click navigation is reimplemented below on the frame:
+  // left half = previous, right half = next.
   showPageCorners: false,
   disableFlipByClick: true,
 });
@@ -375,6 +377,25 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'ArrowRight') goNext();
   if (e.key === 'Home') goHome();
   if (e.key === 'End') goEnd();
+});
+
+// Click-to-flip, done by hand instead of the library's disableFlipByClick
+// path (broken in portrait): click on the left half of the book goes back,
+// right half goes forward. A press that turns into a drag-to-fold must not
+// also flip on release, so track pointer travel and ignore anything that
+// moved more than a click's worth.
+let mouseDownX = null, mouseDownY = null;
+frame.addEventListener('mousedown', (e) => {
+  mouseDownX = e.clientX;
+  mouseDownY = e.clientY;
+});
+frame.addEventListener('click', (e) => {
+  if (mouseDownX === null) return;
+  const moved = Math.hypot(e.clientX - mouseDownX, e.clientY - mouseDownY);
+  mouseDownX = null;
+  if (moved > 8) return; // was a drag, the library already handled it
+  const rect = frame.getBoundingClientRect();
+  if (e.clientX < rect.left + rect.width / 2) goPrev(); else goNext();
 });
 
 // In portrait mode the library's touch handling is broken the same way its
