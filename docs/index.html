@@ -168,12 +168,21 @@ html[data-lang="cn"] .prose {
 /* The PDF glyph's ink is measured dead-center, but its faint outlined top vs
    dense filled curl at the bottom makes it read low; lift it a hair. */
 .toolbar a.pdf .icon { transform: translateY(-0.5px); }
-/* Optical centering: Helvetica Neue's line box carries more descent than the
-   glyphs use, so flex-centered TEXT sits a hair high next to the geometrically
-   centered SVG icons. Padding-top shifts the text down by half its value;
-   the icons are left untouched. */
-.toolbar .nav .lbl, .toolbar #btn-lang, .toolbar .counter {
+/* Optical centering of TEXT next to the geometrically centered SVG icons.
+   Where text-box is supported (Safari 18.2+, Chrome 133+) the line box is
+   trimmed to cap height and baseline, so flex centering becomes geometric
+   and platform font metrics drop out entirely; the eyeballed 0.15em
+   fallback (tuned on desktop) sat visibly low on iOS. All labels live in
+   spans because text-box applies to block containers, and the buttons
+   themselves are flex containers. */
+.toolbar .nav .lbl, .toolbar #lang-lbl, .toolbar .counter {
   padding-top: 0.15em;
+}
+@supports (text-box: trim-both cap alphabetic) {
+  .toolbar .nav .lbl, .toolbar #lang-lbl, .toolbar .counter {
+    padding-top: 0;
+    text-box: trim-both cap alphabetic;
+  }
 }
 /* hover-capable devices only, so tapped buttons don't stick orange on iOS */
 @media (hover: hover) {
@@ -262,7 +271,7 @@ noscript { color: #f4efe4; font-size: 1rem; padding: 2rem; text-align: center; }
   <span class="counter" id="counter"></span>
   <button id="btn-next" class="nav" type="button"><span class="lbl" id="next-lbl"></span><svg class="icon" viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M2 8h10.5 M8.5 4l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
   <button id="btn-end" class="jump" type="button" aria-label="Last spread"><svg class="icon" viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M13.5 3.5v9 M2 8h9 M7.5 4.5 11 8l-3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-  <button id="btn-lang" type="button"></button>
+  <button id="btn-lang" type="button"><span id="lang-lbl"></span></button>
   <a id="pdf-link" class="pdf" target="_blank" rel="noopener" aria-label="Download PDF" title="PDF"><svg class="icon" viewBox="0 0 16 16" width="13" height="13" fill="currentColor" aria-hidden="true"><path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2M9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5z"/><path d="M4.603 14.087a.8.8 0 0 1-.438-.42c-.195-.388-.13-.776.08-1.102.198-.307.526-.568.897-.787a7.7 7.7 0 0 1 1.482-.645 20 20 0 0 0 1.062-2.227 7.3 7.3 0 0 1-.43-1.295c-.086-.4-.119-.796-.046-1.136.075-.354.274-.672.65-.823.192-.077.4-.12.602-.077a.7.7 0 0 1 .477.365c.088.164.12.356.127.538.007.188-.012.396-.047.614-.084.51-.27 1.134-.52 1.794a11 11 0 0 0 .98 1.686 5.8 5.8 0 0 1 1.334.05c.364.066.734.195.96.465.12.144.193.32.2.518.007.192-.047.382-.138.563a1.04 1.04 0 0 1-.354.416.86.86 0 0 1-.51.138c-.331-.014-.654-.196-.933-.417a5.7 5.7 0 0 1-.911-.95 11.7 11.7 0 0 0-1.997.406 11.3 11.3 0 0 1-1.02 1.51c-.292.35-.609.656-.927.787a.8.8 0 0 1-.58.029m1.379-1.901q-.25.115-.459.238c-.328.194-.541.383-.647.547-.094.145-.096.25-.04.361q.016.032.026.044l.035-.012c.137-.056.355-.235.635-.572a8 8 0 0 0 .45-.606m1.64-1.33a13 13 0 0 1 1.01-.193 12 12 0 0 1-.51-.858 21 21 0 0 1-.5 1.05zm2.446.45q.226.245.435.41c.24.19.407.253.498.256a.1.1 0 0 0 .07-.015.3.3 0 0 0 .094-.125.44.44 0 0 0 .059-.2.1.1 0 0 0-.026-.063c-.052-.062-.2-.152-.518-.209a4 4 0 0 0-.612-.053zM8.078 7.8a7 7 0 0 0 .2-.828q.046-.282.038-.465a.6.6 0 0 0-.032-.198.5.5 0 0 0-.145.04c-.087.035-.158.106-.196.283-.04.192-.03.469.046.822q.036.167.09.346z"/></svg></a>
 </div>
 </div>
@@ -294,7 +303,7 @@ function applyLang() {
   document.title = LABELS[lang].title;
   el('prev-lbl').textContent = LABELS[lang].prev;
   el('next-lbl').textContent = LABELS[lang].next;
-  el('btn-lang').textContent = LABELS[lang].lang;
+  el('lang-lbl').textContent = LABELS[lang].lang;
   el('pdf-link').href = PDFS[lang];
   localStorage.setItem('storybook-lang', lang);
 }

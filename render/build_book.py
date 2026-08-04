@@ -255,12 +255,21 @@ html[data-lang="cn"] .prose {
 /* The PDF glyph's ink is measured dead-center, but its faint outlined top vs
    dense filled curl at the bottom makes it read low; lift it a hair. */
 .toolbar a.pdf .icon { transform: translateY(-0.5px); }
-/* Optical centering: Helvetica Neue's line box carries more descent than the
-   glyphs use, so flex-centered TEXT sits a hair high next to the geometrically
-   centered SVG icons. Padding-top shifts the text down by half its value;
-   the icons are left untouched. */
-.toolbar .nav .lbl, .toolbar #btn-lang, .toolbar .counter {
+/* Optical centering of TEXT next to the geometrically centered SVG icons.
+   Where text-box is supported (Safari 18.2+, Chrome 133+) the line box is
+   trimmed to cap height and baseline, so flex centering becomes geometric
+   and platform font metrics drop out entirely; the eyeballed 0.15em
+   fallback (tuned on desktop) sat visibly low on iOS. All labels live in
+   spans because text-box applies to block containers, and the buttons
+   themselves are flex containers. */
+.toolbar .nav .lbl, .toolbar #lang-lbl, .toolbar .counter {
   padding-top: 0.15em;
+}
+@supports (text-box: trim-both cap alphabetic) {
+  .toolbar .nav .lbl, .toolbar #lang-lbl, .toolbar .counter {
+    padding-top: 0;
+    text-box: trim-both cap alphabetic;
+  }
 }
 /* hover-capable devices only, so tapped buttons don't stick orange on iOS */
 @media (hover: hover) {
@@ -314,7 +323,7 @@ function applyLang() {
   document.title = LABELS[lang].title;
   el('prev-lbl').textContent = LABELS[lang].prev;
   el('next-lbl').textContent = LABELS[lang].next;
-  el('btn-lang').textContent = LABELS[lang].lang;
+  el('lang-lbl').textContent = LABELS[lang].lang;
   el('pdf-link').href = PDFS[lang];
   localStorage.setItem('storybook-lang', lang);
 }
@@ -592,7 +601,7 @@ def build_book() -> str:
   <span class="counter" id="counter"></span>
   <button id="btn-next" class="nav" type="button"><span class="lbl" id="next-lbl"></span>{ICON_RIGHT}</button>
   <button id="btn-end" class="jump" type="button" aria-label="Last spread">{ICON_END}</button>
-  <button id="btn-lang" type="button"></button>
+  <button id="btn-lang" type="button"><span id="lang-lbl"></span></button>
   <a id="pdf-link" class="pdf" target="_blank" rel="noopener" aria-label="Download PDF" title="PDF">{ICON_PDF}</a>
 </div>
 </div>
