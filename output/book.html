@@ -24,10 +24,27 @@ html { background: #201d19; }
 body {
   font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
   background: radial-gradient(120% 120% at 50% 20%, var(--stage-1), var(--stage-2));
-  display: flex; flex-direction: column; align-items: center;
   overflow: hidden;
   height: 100dvh; /* the height:100% above is the pre-iOS-15.4 fallback */
   overscroll-behavior: none;
+}
+/* All UI lives in .app so the forced-landscape rotation below can turn the
+   whole interface (book AND toolbar) as one unit. */
+.app {
+  width: 100%; height: 100%;
+  display: flex; flex-direction: column; align-items: center;
+}
+/* Forced landscape: on a touch device held portrait the JS adds .rotated and
+   the interface renders 90deg clockwise, so the book always keeps its
+   two-page landscape spread (never splits into single pages) and the reader
+   just turns the phone. Both conditions must hold: coarse pointer, so a
+   narrowed desktop window stays put, and portrait proportions, so a
+   landscape tablet stays put. */
+html.rotated .app {
+  position: fixed; top: 0; left: 0;
+  width: 100dvh; height: 100vw;
+  transform: rotate(90deg) translateY(-100%);
+  transform-origin: top left;
 }
 
 /* Language toggle: both languages are in the DOM; CSS shows one. */
@@ -188,6 +205,7 @@ noscript { color: #f4efe4; font-size: 1rem; padding: 2rem; text-align: center; }
 </style>
 </head>
 <body>
+<div class="app">
 <div class="stage"><div class="book-frame"><div id="book">
 <div class="page title" data-spread="01"><div class="pane text"><div class="prose lang-en"><p><strong>A Million Cars Come Home</strong></p><p><em>A Smart-Charging Story</em></p><p>The PhD research of Pingfan Hu: three studies on electric vehicles, the grid, and the open-source tools built along the way.</p></div><div class="prose lang-cn"><p><strong>当一百万辆车同时回家</strong></p><p><em>一个关于智能充电的故事</em></p><p>胡平凡 (Pingfan Hu) 的博士研究：电动车、电网，和一路做出来的开源工具。</p></div></div></div>
 <div class="page title" data-spread="01"><div class="pane art"><img src="../render/book-assets/spread-01.jpg" alt="" loading="lazy" decoding="async"></div></div>
@@ -247,6 +265,7 @@ noscript { color: #f4efe4; font-size: 1rem; padding: 2rem; text-align: center; }
   <button id="btn-lang" type="button"></button>
   <a id="pdf-link" class="pdf" target="_blank" rel="noopener" aria-label="Download PDF" title="PDF"><svg class="icon" viewBox="0 0 16 16" width="13" height="13" fill="currentColor" aria-hidden="true"><path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2M9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5z"/><path d="M4.603 14.087a.8.8 0 0 1-.438-.42c-.195-.388-.13-.776.08-1.102.198-.307.526-.568.897-.787a7.7 7.7 0 0 1 1.482-.645 20 20 0 0 0 1.062-2.227 7.3 7.3 0 0 1-.43-1.295c-.086-.4-.119-.796-.046-1.136.075-.354.274-.672.65-.823.192-.077.4-.12.602-.077a.7.7 0 0 1 .477.365c.088.164.12.356.127.538.007.188-.012.396-.047.614-.084.51-.27 1.134-.52 1.794a11 11 0 0 0 .98 1.686 5.8 5.8 0 0 1 1.334.05c.364.066.734.195.96.465.12.144.193.32.2.518.007.192-.047.382-.138.563a1.04 1.04 0 0 1-.354.416.86.86 0 0 1-.51.138c-.331-.014-.654-.196-.933-.417a5.7 5.7 0 0 1-.911-.95 11.7 11.7 0 0 0-1.997.406 11.3 11.3 0 0 1-1.02 1.51c-.292.35-.609.656-.927.787a.8.8 0 0 1-.58.029m1.379-1.901q-.25.115-.459.238c-.328.194-.541.383-.647.547-.094.145-.096.25-.04.361q.016.032.026.044l.035-.012c.137-.056.355-.235.635-.572a8 8 0 0 0 .45-.606m1.64-1.33a13 13 0 0 1 1.01-.193 12 12 0 0 1-.51-.858 21 21 0 0 1-.5 1.05zm2.446.45q.226.245.435.41c.24.19.407.253.498.256a.1.1 0 0 0 .07-.015.3.3 0 0 0 .094-.125.44.44 0 0 0 .059-.2.1.1 0 0 0-.026-.063c-.052-.062-.2-.152-.518-.209a4 4 0 0 0-.612-.053zM8.078 7.8a7 7 0 0 0 .2-.828q.046-.282.038-.465a.6.6 0 0 0-.032-.198.5.5 0 0 0-.145.04c-.087.035-.158.106-.196.283-.04.192-.03.469.046.822q.036.167.09.346z"/></svg></a>
 </div>
+</div>
 <noscript>This book needs JavaScript. The PDF editions:
   <a href="storybook.pdf">English</a> / <a href="storybook-cn.pdf">中文</a>.
 </noscript>
@@ -296,19 +315,31 @@ const startSpread = Math.min(
 const stage = document.querySelector('.stage');
 const frame = document.querySelector('.book-frame');
 
+// Forced landscape (see html.rotated in the CSS): touch device held portrait
+// -> the whole app rotates 90deg clockwise and the book stays a two-page
+// landscape spread. Without this, portrait mode splits every spread into
+// single pages and an edge tap could jump a reader past the text page.
+const COARSE = matchMedia('(pointer: coarse)');
+let rotated = false;
+
 function sizeFrame() {
+  rotated = COARSE.matches && window.innerHeight > window.innerWidth;
+  document.documentElement.classList.toggle('rotated', rotated);
   const cs = getComputedStyle(stage);
   const availW = stage.clientWidth
     - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
   const availH = stage.clientHeight
     - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+  // In rotated mode the layout's vertical axis lies along the physical
+  // screen width, so the viewport cap swaps too.
+  const vpH = rotated ? window.innerWidth : window.innerHeight;
   // Same viewport caps as the old pure-CSS sizing (94vw wide, 86dvh/84dvh
   // tall), so the desktop book keeps its exact size; the stage clamp is the
   // safety net that keeps the toolbar visible on small screens.
-  let w = Math.min(availW, Math.min(availH, window.innerHeight * 0.86) * (1056 / 594));
+  let w = Math.min(availW, Math.min(availH, vpH * 0.86) * (1056 / 594));
   const portrait = w < 480;
   if (portrait) {
-    w = Math.min(availW, Math.min(availH, window.innerHeight * 0.84) * (528 / 594), 478);
+    w = Math.min(availW, Math.min(availH, vpH * 0.84) * (528 / 594), 478);
   }
   w = Math.max(Math.floor(w), 240);
   frame.style.width = w + 'px';
@@ -379,44 +410,65 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'End') goEnd();
 });
 
+// While intercepting, no pointer event may reach the library: its geometry
+// math knows nothing of the .rotated CSS transform (and is offset by a page
+// width in its own portrait mode). Crucially this includes the SYNTHETIC
+// mousedown/mouseup a phone fires after every tap: those used to slip past
+// the touch-only interception, start-and-release a fold inside the library,
+// and flip a second page on top of the click navigation below (the
+// double-flip-on-tap bug). The library's press listeners live on a
+// descendant and its release listeners bubble to window, so a capture-phase
+// stopPropagation on the frame silences both.
+const intercepting = () =>
+  rotated || pageFlip.getOrientation() === 'portrait';
+
 // Click-to-flip, done by hand instead of the library's disableFlipByClick
-// path (broken in portrait): click on the left half of the book goes back,
-// right half goes forward. A press that turns into a drag-to-fold must not
+// path (broken in portrait): click on the back half of the book goes back,
+// front half goes forward. A press that turns into a drag-to-fold must not
 // also flip on release, so track pointer travel and ignore anything that
 // moved more than a click's worth.
 let mouseDownX = null, mouseDownY = null;
 frame.addEventListener('mousedown', (e) => {
+  if (intercepting()) e.stopPropagation();
   mouseDownX = e.clientX;
   mouseDownY = e.clientY;
-});
+}, { capture: true });
 frame.addEventListener('click', (e) => {
+  if (intercepting()) e.stopPropagation();
   if (mouseDownX === null) return;
   const moved = Math.hypot(e.clientX - mouseDownX, e.clientY - mouseDownY);
   mouseDownX = null;
   if (moved > 8) return; // was a drag, the library already handled it
   const rect = frame.getBoundingClientRect();
-  if (e.clientX < rect.left + rect.width / 2) goPrev(); else goNext();
-});
+  // Rotated 90deg clockwise, the book's left edge lies at the screen top.
+  const back = rotated
+    ? e.clientY < rect.top + rect.height / 2
+    : e.clientX < rect.left + rect.width / 2;
+  if (back) goPrev(); else goNext();
+}, { capture: true });
 
-// In portrait mode the library's touch handling is broken the same way its
-// flipPrev is: the single-page bounds rect is offset by a full page width, so
-// touches map to the wrong book region (swipe-forward flips backward and
-// swipe-back does nothing). Intercept touches before they reach the library
-// (capture phase on the frame, its listener sits on a descendant) and run our
-// own swipe detection. Landscape keeps the library's native drag-to-fold.
+// Swipe detection, ours: in rotated mode the library cannot interpret
+// coordinates at all, and in its portrait mode the single-page bounds rect
+// is offset by a full page width (swipe-forward flips backward and
+// swipe-back does nothing). Unrotated landscape keeps the library's native
+// drag-to-fold.
 let touchStartX = null, touchStartY = null;
 frame.addEventListener('touchstart', (e) => {
-  if (pageFlip.getOrientation() !== 'portrait') return;
+  if (!intercepting()) return;
   e.stopPropagation();
   touchStartX = e.touches[0].clientX;
   touchStartY = e.touches[0].clientY;
 }, { capture: true, passive: true });
 frame.addEventListener('touchend', (e) => {
-  if (pageFlip.getOrientation() !== 'portrait' || touchStartX === null) return;
+  if (!intercepting() || touchStartX === null) return;
   e.stopPropagation();
-  const dx = e.changedTouches[0].clientX - touchStartX;
-  const dy = e.changedTouches[0].clientY - touchStartY;
+  const rawX = e.changedTouches[0].clientX - touchStartX;
+  const rawY = e.changedTouches[0].clientY - touchStartY;
   touchStartX = null;
+  // In rotated mode a swipe along the book's reading axis is a vertical
+  // screen gesture: screen-down is book-right.
+  const dx = rotated ? rawY : rawX;
+  const dy = rotated ? -rawX : rawY;
   if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
   if (dx < 0) goNext(); else goPrev();
 }, { capture: true, passive: true });
