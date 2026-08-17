@@ -27,7 +27,7 @@ glasses, build) plus a reference outfit, but only the recognizable features must
 constant.
 
 Sources: each person's role and affiliation below is drawn from the project's own People
-page (https://sc.pingfanhu.com/people) and verified against public profiles where titles
+page (https://sc.pingfan.org/people) and verified against public profiles where titles
 have changed. The "Look" lines are written from each person's real reference photo in
 `original/`.
 
